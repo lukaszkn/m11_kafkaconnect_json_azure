@@ -1,0 +1,16 @@
+{
+"name": "expedia",
+  "config": {
+    "topics": "PUT_YOUR_TOPIC_NAME_HERE",
+    "bootstrap.servers": "kafka:9071",
+    "connector.class": "io.confluent.connect.azure.blob.storage.AzureBlobStorageSourceConnector",
+    "tasks.max": "2",
+    "topics.dir": "PUT_YOUR_DIR_NAME_WHERE_IS_TOPIC_LOCATED",
+    "format.class": "io.confluent.connect.azure.blob.storage.format.avro.AvroFormat",
+    "azblob.account.name": "",
+    "azblob.account.key": "",
+    "azblob.container.name": "data",
+    "azblob.retry.retries": "3"
+    // please add your MaskField configs here
+  }
+}
