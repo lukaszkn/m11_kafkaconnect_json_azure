@@ -1,26 +1,6 @@
 # KafkaConnect [json]
 
-## Prerequisites
-
-Before proceeding, ensure you have the following tools installed:
-
-- Rancher Desktop – Required for running Kubernetes locally (alternative to Docker Desktop). Please keep it running.
-- Azure CLI (az) – Used to interact with Azure services and manage resources.
-- Terraform – Infrastructure as Code (IaC) tool for provisioning Azure resources.
-- Helm - Helps you manage Kubernetes applications. Helm Charts help you define, install, and upgrade them.
-
-📘 Follow the full setup instructions for [Windows environment setup](./setup-windows.md)<br>
-🍎 Follow the full setup instructions for [MacOS environment setup](./setup-macos.md)<br>
-🐧 Follow the full setup instructions for [Ubuntu 24.10 environment setup](./setup-ubuntu.md)
-
-📌 **Important Guidelines**
-Please read the instructions carefully before proceeding. Follow these guidelines to avoid mistakes:
-
-- If you see `<SOME_TEXT_HERE>`, you need to **replace this text and the brackets** with the appropriate value as described in the instructions.
-- Follow the steps in order to ensure proper setup.
-- Pay attention to **bolded notes**, warnings, or important highlights throughout the document.
-- Clean Up Azure Resources Before Proceeding. Since you are using a **free-tier** Azure account, it’s crucial to clean up any leftover resources from previous lessons or deployments before proceeding. Free-tier accounts 
-have strict resource quotas, and exceeding these limits may cause deployment failures.
+## [Screenshots from execution are emdedded in this README (stored in `screenshots` folder)](screenshots/)
 
 ## 1. Create a Storage Account in Azure for Terraform State
 
@@ -36,37 +16,7 @@ Run the following command to authenticate:
 az login
 ```
 
-💡 **Notes**:
-- This will open a browser for authentication.
-- If you have **multiple subscriptions**, you will be prompted to **choose one**.
-- If you only have **one subscription**, it will be selected by default.
-- **Please read the output carefully** to ensure you are using the correct subscription.
-
 2. **Create a Resource Group:**  
-
-📌 **Important! Naming Rules for Azure Resources**
-
-<details>
-  <summary>👇<strong> Before proceeding, carefully review the naming rules to avoid deployment failures.</strong> 👇 [⬇️⬇️⬇️ Expand to see Naming Rules ⬇️⬇️⬇️]</summary>
-
-### 📝 **Naming Rules for Azure Resources**
-Before creating any resources, ensure that you follow **Azure's naming conventions** to avoid errors.
-
-- **Resource names must follow specific character limits and allowed symbols** depending on the resource type.
-- **Using unsupported special characters can cause deployment failures.**
-- **Storage accounts, resource groups, and other Azure resources have different rules.**
-
-🔹 **Common Rules Across Most Resources**:
-- **Allowed characters:** Only **letters (A-Z, a-z)**, **numbers (0-9)**.
-- **Case Sensitivity:** Most names are **lowercase only** (e.g., storage accounts).
-- **Length Restrictions:** Vary by resource type (e.g., Storage accounts: **3-24 characters**).
-- **No special symbols:** Avoid characters like `@`, `#`, `$`, `%`, `&`, `*`, `!`, etc.
-- **Hyphens and underscores:** Some resources support them, but rules differ.
-
-📖 **For complete naming rules, refer to the official documentation:**  
-🔗 [Azure Naming Rules and Restrictions](https://learn.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules)
-
-</details>
 
 To create a Resource Group name run the command:
 
@@ -75,8 +25,6 @@ az group create --name <RESOURCE_GROUP_NAME> --location <AZURE_REGION>
 ```  
 
 3. **Create a Storage Account:**  
-
-⚠️  **Storage Account name, are globally unique, so you must choose a name that no other Azure user has already taken.** 
 
 ```bash
 az storage account create --name <STORAGE_ACCOUNT_NAME> --resource-group <RESOURCE_GROUP_NAME> --location <AZURE_REGION> --sku Standard_LRS
@@ -87,23 +35,6 @@ az storage account create --name <STORAGE_ACCOUNT_NAME> --resource-group <RESOUR
 ```bash
 az storage container create --name <CONTAINER_NAME> --account-name <STORAGE_ACCOUNT_NAME>
 ```  
-
-### **Option 2: Using Azure Portal (Web UI)**
-
-1. **Log in to [Azure Portal](https://portal.azure.com/)**  
-2. Navigate to **Resource Groups** and click **Create**.  
-3. Enter a **Resource Group Name**, select a **Region**, and click **Review + Create**.  
-4. Once the Resource Group is created, go to **Storage Accounts** and click **Create**.  
-5. Fill in the required details:  
-   - **Storage Account Name**  
-   - **Resource Group** (Select the one you just created)  
-   - **Region** (Choose your preferred region)  
-   - **Performance**: Standard  
-   - **Redundancy**: Locally Redundant Storage (LRS)  
-6. Click **Review + Create** and then **Create**.  
-7. Once created, go to the **Storage Account** → **Data Storage** → **Containers** → Click **+ Container**.  
-8. Name it `tfstate` (as example) and set **Access Level** to **Private**.  
-9. To get `<STORAGE_ACCOUNT_KEY>`: Navigate to your **Storage Account** →**Security & Networking** → **Access Keys**. Press `show` button on `key1`
 
 ## 2. Get Your Azure Subscription ID
 
@@ -177,6 +108,8 @@ terraform apply terraform.plan
 terraform output resource_group_name
 ```
 
+<img src='screenshots/Screenshot 2025-09-25 at 12.06.54.png' width='850'>
+
 ## 5. Verify Resource Deployment in Azure
 
 After Terraform completes, verify that resources were created:
@@ -227,6 +160,8 @@ Verify Kubernetes Cluster Connectivity:
 kubectl get nodes
 ```
 
+<img src='screenshots/Screenshot 2025-09-25 at 12.12.59.png' width='850'>
+
 4. Install Confluent for Kubernetes
 
 - Add the Confluent for Kubernetes Helm repository:
@@ -241,6 +176,8 @@ helm repo update
 ```bash
 helm upgrade --install confluent-operator confluentinc/confluent-for-kubernetes
 ```
+
+<img src='screenshots/Screenshot 2025-09-25 at 12.14.17.png' width='850'>
 
 ## 7. Configure and Use Azure Container Registry (ACR)
 
@@ -263,30 +200,19 @@ az acr login --name <ACR_NAME>
 ## 8. Build and push `azure-connector` into ACR
 
 1. Go into folder `connectors/`, modify the Dockerfile if required.
-2. ⚠️ To build the Docker image, choose the correct command based on your CPU architecture: 
+2. Build the Docker image: 
 
-    <details>
-    <summary><code>Linux</code>, <code>Windows</code>, <code>&lt;Intel-based macOS&gt;</code> (<i>click to expand</i>)</summary>
-
-    ```bash
-    docker build -t <ACR_NAME>/azure-connector:latest .
-    ```
-
-    </details>
-    <details>
-    <summary><code>macOS</code> with <code>M1/M2/M3</code> <code>&lt;ARM-based&gt;</code>  (<i>click to expand</i>)</summary>
-
-    ```bash
-    docker build --platform linux/amd64 -t <ACR_NAME>/azure-connector:latest .
-    ```
-
-    </details>
+```bash
+docker build --platform linux/amd64 -t <ACR_NAME>/azure-connector:latest .
+```
 
 3. Push Docker Image to ACR:
 
 ```bash
 docker push <ACR_NAME>/azure-connector
 ```
+
+<img src='screenshots/Screenshot 2025-09-25 at 12.23.48.png' width='850'>
 
 4. Verify Image in ACR:
 
@@ -324,28 +250,21 @@ It will take approximately **15–20 minutes** to set up all resources.
 kubectl get pods -o wide 
 ```
 
+<img src='screenshots/Screenshot 2025-09-25 at 12.32.11.png' width='850'>
+
+<img src='screenshots/Screenshot 2025-09-25 at 14.31.06.png' width='850'>
+
 ### View Control Center
 
 - Set up port forwarding to Control Center web UI from local machine:
 
-    <details>
-    <summary><code>Linux</code>, <code>MacOS</code> (<i>click to expand</i>)</summary>
-
-    ```bash
-    kubectl port-forward controlcenter-0 9021:9021 &>/dev/null &
-    ```
-
-    </details>
-    <details>
-    <summary><code>Windows - [powershell]</code></code>  (<i>click to expand</i>)</summary>
-
-    ```bash
-    Start-Process powershell -WindowStyle Hidden -ArgumentList 'kubectl port-forward controlcenter-0 9021:9021 *> $null'
-    ```
-
-    </details>
+```bash
+kubectl port-forward controlcenter-0 9021:9021 &>/dev/null &
+```
 
 - Browse to Control Center: [http://localhost:9021](http://localhost:9021)
+
+<img src='screenshots/Screenshot 2025-09-25 at 13.19.38.png' width='850'>
 
 ## 10. Create a kafka topic
 
@@ -353,28 +272,17 @@ The topic should have at least 3 partitions because the azure blob storage has 3
 
 - Create a connection for kafka:
 
-    <details>
-    <summary><code>Linux</code>, <code>MacOS</code> (<i>click to expand</i>)</summary>
-
-    ```bash
-    kubectl port-forward connect-0 8083:8083 &>/dev/null &
-    ```
-
-    </details>
-    <details>
-    <summary><code>Windows - [powershell]</code></code>  (<i>click to expand</i>)</summary>
-
-    ```bash
-    Start-Process powershell -WindowStyle Hidden -ArgumentList 'kubectl port-forward connect-0 8083:8083 *> $null'
-    ```
-
-    </details>
+```bash
+kubectl port-forward connect-0 8083:8083 &>/dev/null &
+```
 
 - execute below command to create Kafka topic with a name `expedia`
 
 ```bash
 kubectl exec kafka-0 -c kafka -- bash -c "/usr/bin/kafka-topics --create --topic expedia --replication-factor 3 --partitions 3 --bootstrap-server kafka:9092"
 ```
+
+<img src='screenshots/Screenshot 2025-09-25 at 13.18.31.png' width='850'>
 
 ## 11. Upload the data files into Azure Conatainers
 
@@ -404,6 +312,8 @@ terraform output storage_account_name
                 └── example+2+0000000000.avro
 ```
 
+<img src='screenshots/Screenshot 2025-09-25 at 14.20.53.png' width='850'>
+
 ## 12. Prepare the `azure connector` configuration file
 
 Modify the file `/terraform/azure-source-cc.json` (example file located in folder `connectors`)
@@ -414,38 +324,32 @@ Modify the file `/terraform/azure-source-cc.json` (example file located in folde
 - placeholders in the file must be updated and also add parameters for MaskField
 
 ```yaml
-    "bootstrap.servers"                 = "kafka:9071"
-    "topics"                            = "PUT_YOUR_TOPIC_NAME_HERE"
-    "topics.dir"                        = "PUT_YOUR_DIR_NAME_WHERE_IS_TOPIC_LOCATED"
-    // please add your MaskField configs here
+    "azblob.account.key": "<redacted>",
+    "azblob.account.name": "stdevwesteurope2ch6",
+    "azblob.container.name": "data",
+    "bootstrap.servers": "kafka:9071",
+    "connector.class": "io.confluent.connect.azure.blob.storage.AzureBlobStorageSourceConnector",
+    "format.class": "io.confluent.connect.azure.blob.storage.format.avro.AvroFormat",
+    "tasks.max": "2",
+
+    "topics": "expedia",
+    "topics.dir": "m11kafkaconnect/topics",
+
+    "transforms": "MaskTime",
+    "transforms.MaskTime.type": "org.apache.kafka.connect.transforms.MaskField$Value",
+    "transforms.MaskTime.fields": "date_time",
+    "transforms.MaskTime.replacement": "0000-00-00 00:00:00"
 ```
 
 ## 13. Upload the connector file through the API
 
-- go into folder `terraform`, and run a command depends on your OS:
+- go into folder `terraform`, and run a command:
 
-    <details>
-    <summary><code>Linux</code>, <code>MacOS</code> (<i>click to expand</i>)</summary>
+```bash
+curl -s -X POST -H "Content-Type:application/json" --data @azure-source-cc.json http://localhost:8083/connectors
+```
 
-    ```bash
-    curl -s -X POST -H "Content-Type:application/json" --data @azure-source-cc.json http://localhost:8083/connectors
-    ```
-
-    </details>
-    <details>
-    <summary><code>Windows - [powershell]</code>  (<i>click to expand</i>)</summary>
-
-    ```bash
-    Remove-item alias:curl
-    ```
-
-    then:
-
-    ```bash
-    curl -s -X POST -H "Content-Type:application/json" --data @azure-source-cc.json http://localhost:8083/connectors
-    ```
-
-    </details>
+<img src='screenshots/Screenshot 2025-09-25 at 14.31.55.png' width='850'>
 
 ## 14. Verify the messages in Kafka
 
@@ -454,11 +358,11 @@ Modify the file `/terraform/azure-source-cc.json` (example file located in folde
 - Choose your topic name
 - In the `messages` tab you should able to see incoming messages
 
+<img src='screenshots/Screenshot 2025-09-25 at 14.33.50.png' width='850'>
+
 ## 15. Destroy Infrastructure (Required Step)
 
 After completing all steps, **destroy the infrastructure** to clean up all deployed resources.
-
-⚠️ **Warning:** This action is **irreversible**. Running the command below will **delete all infrastructure components** created in previous steps.
 
 To remove all deployed resources, run:
 
@@ -476,8 +380,12 @@ kubectl delete -f confluent-platform.yaml
 helm uninstall confluent-operator
 ```
 
+<img src='screenshots/Screenshot 2025-09-25 at 14.35.31.png' width='850'>
+
 - To remove all Azure deployed resources, run from the `terraform` folder:
 
 ```bash
 terraform destroy
 ```
+
+<img src='screenshots/Screenshot 2025-09-25 at 14.43.35.png' width='850'>
